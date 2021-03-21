@@ -1,0 +1,13 @@
+version: '3'
+services:
+  code:
+    build:
+      context: .
+      dockerfile: ./compose/Dockerfile
+    command: bash
+    volumes:
+      - ./:/app
+      - ~/.docker-bash-history/tfp:/home/nonrootuser/.bash_history
+      - /var/lib/docker/containers/:/var/lib/docker/containers/:ro
+      - /var/lib/docker:/var/lib/docker:ro
+      - /var/run/docker.sock:/var/run/docker.sock
