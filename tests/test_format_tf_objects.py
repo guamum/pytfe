@@ -370,7 +370,7 @@ class TestFormatModule(TestCase):
 class TestFormatData(TestCase):
 
     def test_simple(self):
-        obj = pytfe.data(
+        data = pytfe.data(
             'digitalocean_kubernetes_cluster',
             'example',
             name="prod-cluster-01"
@@ -379,7 +379,35 @@ class TestFormatData(TestCase):
         data "digitalocean_kubernetes_cluster" "example" {
           name = prod-cluster-01
         }""")
-        self.assertEqual(obj.format(), expected)
+        self.assertEqual(data.format(), expected)
+
+    def test_reference_data_in_a_resouce(self):
+        plan = pytfe.Plan()
+        data = plan.add(pytfe.data(
+            'digitalocean_kubernetes_cluster',
+            'example',
+            name="prod-cluster-01"
+        ))
+
+        plan.add(pytfe.resource(
+            "local_file", "kubeconfig_primary",
+            content=data.kube_config,
+            filename='"${path.module}/primary-k8s-config.yaml"',
+            sensitive_content=True
+        ))
+
+        expected = pytfe.TFBlock("""
+        data "digitalocean_kubernetes_cluster" "example" {
+          name = prod-cluster-01
+        }
+
+        resource "local_file" "kubeconfig_primary" {
+          content = data.digitalocean_kubernetes_cluster.example.kube_config
+          filename = "${path.module}/primary-k8s-config.yaml"
+          sensitive_content = true
+        }""")
+
+        self.assertEqual(plan.format(), expected)
 
 
 class TestFormatTerraform(TestCase):

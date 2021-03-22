@@ -127,6 +127,8 @@ def format_any_obj(key: str, value: object, indent: int = 0):
         temp_value = value.format()
     elif isinstance(value, Variable):
         temp_value = f'var.{value.args[0]}'
+    # elif isinstance(value, Data):
+    #     temp_value = f'var.{value.args[0]}'
     elif isinstance(value, Item):
         temp_value = value.format()
     elif isinstance(value, dict):
@@ -224,8 +226,9 @@ class Item:
             elif isinstance(self, Locals):
                 return Attribute(f"local.{attr}")
             elif isinstance(self, Data):
-                # data.google_compute_image.NAME.ATTR
-                return Attribute(f"data.{self.__class__.__name__}.{attr}")
+                # data.google_compute_image.NAME.ATTR]
+                data_path = ".".join(self.args)
+                return Attribute(f"data.{data_path}.{attr}")
             else:
                 raise AttributeError(attr)
 
