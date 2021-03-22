@@ -240,6 +240,37 @@ class TestFormatVariable(TestCase):
         }""")
         self.assertEqual(plan.format(), expected)
 
+    def test_complex_variable_reference(self):
+        plan = pytfe.Plan()
+        variable = plan.add(pytfe.variable(
+            "extra_vars",
+            type="map(string)",
+            default=pytfe.TFBlock("""{hello = "world }"""),
+        ))
+
+        plan += pytfe.provider("docker", host='"unix:///var/run/docker.sock"')
+        plan += pytfe.resource(
+            "docker_container", "foo",
+            image=variable.extra_vars.hello, name='"foo"'
+        )
+
+        expected = pytfe.TFBlock("""
+        variable "extra_vars" {
+          type = map(string)
+          default = {hello = "world }
+        }
+
+        provider "docker" {
+          host = "unix:///var/run/docker.sock"
+        }
+
+        resource "docker_container" "foo" {
+          image = var.extra_vars.hello
+          name = "foo"
+        }""")
+        print(plan.format_full())
+        self.assertEqual(plan.format_full(), expected)
+
 
 class TestFormatProvider(TestCase):
 
@@ -321,6 +352,10 @@ class TestFormatProvisioner(TestCase):
         plan += provisioner
 
         expected = pytfe.TFBlock("""
+        variable "user_name" {
+          type = string
+        }
+
         provisioner "file" {
           source = "conf/myapp.conf"
           destination = "/etc/myapp.conf"
@@ -331,7 +366,7 @@ class TestFormatProvisioner(TestCase):
             host = var.host
           }
         }""")
-        self.assertEqual(plan.format(), expected)
+        self.assertEqual(plan.format_full(), expected)
 
 
 class TestFormatConnection(TestCase):

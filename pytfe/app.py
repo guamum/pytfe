@@ -126,7 +126,9 @@ def format_any_obj(key: str, value: object, indent: int = 0):
     elif isinstance(value, Function):
         temp_value = value.format()
     elif isinstance(value, Variable):
-        temp_value = f'var.{value.args[0]}'
+        var_path = '.'.join(value.args)
+        print(var_path)
+        temp_value = f'var.{var_path}'
     # elif isinstance(value, Data):
     #     temp_value = f'var.{value.args[0]}'
     elif isinstance(value, Item):
@@ -222,7 +224,7 @@ class Item:
             if isinstance(self, Module):
                 return Attribute(f"module.{attr}")
             if isinstance(self, Variable):
-                return Attribute(f"var.{attr}")
+                return Attribute(f"var.{self.args[0]}")
             elif isinstance(self, Locals):
                 return Attribute(f"local.{attr}")
             elif isinstance(self, Data):
