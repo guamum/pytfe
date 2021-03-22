@@ -454,10 +454,10 @@ class Plan:
             return
         raise Exception(f'{plan} must be a Plan instance.')
 
-    def __getattr__(self, name):
-        list_obj = self.kwds.get(name, Block())
-        return list_obj
-        return Attribute(f'{self}.{name}')
+    # def __getattr__(self, name):
+    #     list_obj = self.kwds.get(name, Block())
+    #     return list_obj
+    #     return Attribute(f'{self}.{name}')
 
 
 def clear_dir(odir: str):
