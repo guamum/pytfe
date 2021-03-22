@@ -217,6 +217,29 @@ class TestFormatVariable(TestCase):
         }""")
         self.assertEqual(variable.format(), expected)
 
+    def test_variable_reference_on_docker_provider(self):
+        plan = pytfe.Plan()
+        docker_image = plan.add(pytfe.variable(
+            "docker_image", type="string", default=pytfe.Quote(''),
+        ))
+
+        plan += pytfe.provider("docker", host='"unix:///var/run/docker.sock"')
+        plan += pytfe.resource(
+            "docker_container", "foo",
+            image=docker_image, name='"foo"'
+        )
+
+        expected = pytfe.TFBlock("""
+        provider "docker" {
+          host = "unix:///var/run/docker.sock"
+        }
+
+        resource "docker_container" "foo" {
+          image = var.docker_image
+          name = "foo"
+        }""")
+        self.assertEqual(plan.format(), expected)
+
 
 class TestFormatProvider(TestCase):
 
@@ -342,6 +365,21 @@ class TestFormatModule(TestCase):
           servers = 3
         }""")
         self.assertEqual(module.format(), expected)
+
+
+class TestFormatData(TestCase):
+
+    def test_simple(self):
+        obj = pytfe.data(
+            'digitalocean_kubernetes_cluster',
+            'example',
+            name="prod-cluster-01"
+        )
+        expected = pytfe.TFBlock("""
+        data "digitalocean_kubernetes_cluster" "example" {
+          name = prod-cluster-01
+        }""")
+        self.assertEqual(obj.format(), expected)
 
 
 class TestFormatTerraform(TestCase):

@@ -116,7 +116,7 @@ def format_function(value):
     return ''.join(lines) + fn_args + ')'
 
 
-def format_others(key: str, value: object, indent: int = 0):
+def format_any_obj(key: str, value: object, indent: int = 0):
     temp_value = None
     return_as_map = True
 
@@ -125,6 +125,8 @@ def format_others(key: str, value: object, indent: int = 0):
         temp_value = value.format()
     elif isinstance(value, Function):
         temp_value = value.format()
+    elif isinstance(value, Variable):
+        temp_value = f'var.{value.args[0]}'
     elif isinstance(value, Item):
         temp_value = value.format()
     elif isinstance(value, dict):
@@ -135,8 +137,6 @@ def format_others(key: str, value: object, indent: int = 0):
         temp_value = value
     elif isinstance(value, Quote):
         temp_value = str(value)
-    # elif isinstance(value, str):
-    #     temp_value = f'"{value}"'
     elif isinstance(value, bool):
         temp_value = 'true' if value else 'false'
     else:
@@ -152,7 +152,7 @@ def format_dict(dct: dict, indent: int = 0) -> str:
     lines = []
     lines.append("{")
     for k, v in dct.items():
-        v = format_others(k, v, indent=indent)
+        v = format_any_obj(k, v, indent=indent)
         lines.append(textwrap.indent(f"{v}", IDENTATION))
     lines.append("}")
     return textwrap.indent("\n".join(lines), '')
@@ -163,7 +163,7 @@ def format_list(lst: list, indent: int = 0) -> str:
     lines.append("[")
     inside_lines = []
     for item in lst:
-        item = format_others('', item, indent=indent)
+        item = format_any_obj('', item, indent=indent)
         inside_lines.append(textwrap.indent(f"{item}", IDENTATION))
     lines.append(',\n'.join(inside_lines))
     lines.append("]")
@@ -186,7 +186,7 @@ class Item:
         for item in self.items:
             lines.append(textwrap.indent(item.format(), IDENTATION))
         for k, v in self.kwds.items():
-            v = format_others(k, v)
+            v = format_any_obj(k, v)
             lines.append(textwrap.indent(f'{v}', IDENTATION))
         lines.append("}")
         return "\n".join(lines)
@@ -233,16 +233,14 @@ class Item:
         class_name = self.__class__.__name__
         return Attribute('{0}.{1}'.format(class_name, class_name))
 
+    def __repr__(self):
+        return str(self)
+
 
 class BaseItem(Item):
-    type = ''
 
     def __init__(self, *args, **kwds):
         super().__init__(self.type, *args, **kwds)
-
-
-class UnNamedBlock(BaseItem):
-    type = 'unnamed'
 
 
 class Provider(BaseItem):
@@ -282,6 +280,9 @@ class Function(BaseItem):
 class Variable(BaseItem):
     type = 'variable'
 
+    # def format(self):
+    #     return f'var.{self.args[0]}'
+
 
 class Connection(BaseItem):
     """docs: https://www.terraform.io/docs/language/resources/provisioners/connection.html"""
@@ -316,11 +317,11 @@ class TFBlock:
         return self.format()
 
     def __repr__(self):
-        return self.format()
+        return str(self)
 
     def __eq__(self, other):
         if isinstance(other, str):
-            return self.format() == other
+            return str(self) == other
         return False
 
 
@@ -346,7 +347,7 @@ class Raw:
     def __eq__(self, other):
         """Overrides the default implementation"""
         if isinstance(other, str):
-            return self.value == other
+            return str(self) == other
         return False
 
 
@@ -488,9 +489,9 @@ def load_main_module(moddir: str):
             logging.error(f"Module main.py not found in directory {moddir}")
             sys.exit(-1)
 
-        # if not hasattr(module, "plan") or not isinstance(module.plan, Plan):
-        #     logging.error(f"Valid plan object not found in module {modpath}")
-        #     sys.exit(-1)
+        if not hasattr(module, "plan") or not isinstance(module.plan, Plan):
+            logging.error(f"Valid plan object not found in module {modpath}")
+            sys.exit(-1)
 
         return module
 
@@ -603,6 +604,7 @@ backend = Backend
 output = Output
 provider = Provider
 resource = Resource
+data = Data
 functions = FunctionGenerator()
 f = functions
 
