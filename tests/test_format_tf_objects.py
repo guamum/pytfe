@@ -407,7 +407,13 @@ class TestFormatData(TestCase):
           sensitive_content = true
         }""")
 
-        self.assertEqual(plan.format(), expected)
+        self.assertEqual(plan.format_full(), expected)
+
+        expected_data = pytfe.TFBlock("""
+        data "digitalocean_kubernetes_cluster" "example" {
+          name = prod-cluster-01
+        }""")
+        self.assertEqual(plan.format_datas(), expected_data)
 
 
 class TestFormatTerraform(TestCase):

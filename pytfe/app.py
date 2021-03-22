@@ -415,26 +415,34 @@ class Plan:
 
     # fmt: off
     def format(self):
+        ignore_types = ("variable", "output", "data")
         return "\n\n".join(
             map(
                 lambda item: item.format(),
-                filter(lambda item: item.type not in ("variable", "output"), self.items),
+                filter(lambda item: item.type not in ignore_types, self.items),
             )
         ).strip("\n")
 
-    def format_vars(self):
+    def format_full(self):
         return "\n\n".join(
-            map(
-                lambda item: item.format(),
-                filter(lambda item: item.type == "variable", self.items))
+            map(lambda item: item.format(), self.items)
         ).strip("\n")
 
-    def format_outs(self):
+    def format_by_item_type(self, *args):
         return "\n\n".join(
             map(
                 lambda item: item.format(),
-                filter(lambda item: item.type == "output", self.items))
+                filter(lambda item: item.type in tuple(arg for arg in args), self.items))
         ).strip("\n")
+
+    def format_datas(self):
+        return self.format_by_item_type('data')
+
+    def format_vars(self):
+        return self.format_by_item_type('variable')
+
+    def format_outs(self):
+        return self.format_by_item_type('output')
     # fmt: on
 
     def update(self, plan):
@@ -531,12 +539,13 @@ def write(odir: str, module: object):
         write_file(body, "main.tf")
 
     variables = module.plan.format_vars()
-    if variables:
-        write_file(variables, "variables.tf")
+    write_file(variables, "variables.tf")
 
     outputs = module.plan.format_outs()
-    if outputs:
-        write_file(outputs, "outputs.tf")
+    write_file(outputs, "outputs.tf")
+
+    datas = module.plan.format_datas()
+    write_file(datas, "data.tf")
 
     for item in module.plan.modules:
         source = item.kwds.get("source", "").strip('"')
