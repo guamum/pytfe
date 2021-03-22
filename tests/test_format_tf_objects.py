@@ -488,3 +488,29 @@ class TestFormatTFBlock(TestCase):
           }
         }""")
         self.assertEqual(obj.format(), expected)
+
+
+class TestFormatPlan(TestCase):
+
+    def test_join_two_empthy_plans(self):
+        plan1 = pytfe.Plan()
+        plan2 = pytfe.Plan()
+
+        plan1.update(plan2)
+
+        self.assertEqual(plan1.format(), '')
+
+    def test_join_two_plans_first_empthy_and_second_with_one_variable(self):
+        plan1 = pytfe.Plan()
+        plan2 = pytfe.Plan()
+        plan2 += pytfe.variable('my_variable', type='"string"', default='""')
+
+        self.assertEqual(plan1.format_vars(), '')
+        plan1.update(plan2)
+
+        expected = pytfe.TFBlock("""
+        variable "my_variable" {
+          type = "string"
+          default = ""
+        }""")
+        self.assertEqual(plan1.format_vars(), expected)

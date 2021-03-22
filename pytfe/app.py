@@ -409,7 +409,6 @@ class Plan:
             return obj
 
         nested_items = [_unpack(v) for v in self.kwds.values()]
-        # nested_items_2 = [v for k, v in nested_items.items()]
         _items = list(chain(*nested_items))
 
         return _items
@@ -437,6 +436,23 @@ class Plan:
                 filter(lambda item: item.type == "output", self.items))
         ).strip("\n")
     # fmt: on
+
+    def update(self, plan):
+        if isinstance(plan, Plan):
+            for k, v in plan.kwds.items():
+                if isinstance(v, dict):
+                    if k in self.kwds:
+                        self.kwds[k].update(**plan.kwds[k])
+                    else:
+                        self.kwds[k] = plan.kwds[k]
+                if isinstance(v, list):
+                    if v2 in self.kwds:
+                        for x in v2:
+                            self.kwds[k].append(v2)
+                    else:
+                        self.kwds[k] = plan.kwds[k]
+            return
+        raise Exception(f'{plan} must be a Plan instance.')
 
     def __getattr__(self, name):
         list_obj = self.kwds.get(name, Block())
