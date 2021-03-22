@@ -251,7 +251,10 @@ class TestFormatVariable(TestCase):
         plan += pytfe.provider("docker", host='"unix:///var/run/docker.sock"')
         plan += pytfe.resource(
             "docker_container", "foo",
-            image=variable.extra_vars.hello, name='"foo"'
+            image=variable,
+            image1=variable.extra_vars,
+            image2=variable.extra_vars.hello,
+            name='"foo"'
         )
 
         expected = pytfe.TFBlock("""
@@ -265,10 +268,11 @@ class TestFormatVariable(TestCase):
         }
 
         resource "docker_container" "foo" {
-          image = var.extra_vars.hello
+          image = var.extra_vars
+          image1 = var.extra_vars
+          image2 = var.extra_vars.hello
           name = "foo"
         }""")
-        print(plan.format_full())
         self.assertEqual(plan.format_full(), expected)
 
 
