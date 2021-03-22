@@ -174,15 +174,15 @@ class Item:
 
     def __init__(self, item_type: str, *args, **kwds):
         self.type = item_type
-        self.args = tuple(arg for arg in args if not isinstance(arg, Item))
+        self.args = tuple(arg for arg in args if not isinstance(arg, (Item, TFBlock)))
         self.all_args = tuple(arg for arg in args)
         self.kwds = Block(**kwds)
-        self.items = tuple(item for item in args if isinstance(item, Item))
+        self.items = tuple(item for item in args if isinstance(item, (Item, TFBlock)))
 
     def format(self) -> str:
         lines = []
-
-        lines.append(self.type + "".join(' "{}"'.format(arg) for arg in self.args) + " {")
+        start_block = self.type + "".join(' "{}"'.format(arg) for arg in self.args)
+        lines.append(start_block + " {")
         for item in self.items:
             lines.append(textwrap.indent(item.format(), IDENTATION))
         for k, v in self.kwds.items():
@@ -241,6 +241,10 @@ class BaseItem(Item):
         super().__init__(self.type, *args, **kwds)
 
 
+class UnNamedBlock(BaseItem):
+    type = 'unnamed'
+
+
 class Provider(BaseItem):
     type = 'provider'
 
@@ -296,11 +300,28 @@ class Terraform(BaseItem):
     type = 'terraform'
 
 
-def TFBlock(value, indent: int = 0):
-    formatted = textwrap.dedent(value)
-    if value.startswith('\n'):
-        formatted = formatted.replace('\n', '', 1)
-    return formatted
+class TFBlock:
+    """docstring for TFBlock"""
+
+    def __init__(self, value: str=''):
+        self.value = value
+
+    def format(self):
+        formatted = textwrap.dedent(self.value)
+        if self.value.startswith('\n'):
+            formatted = formatted.replace('\n', '', 1)
+        return formatted
+
+    def __str__(self):
+        return self.format()
+
+    def __repr__(self):
+        return self.format()
+
+    def __eq__(self, other):
+        if isinstance(other, str):
+            return self.format() == other
+        return False
 
 
 class FunctionGenerator:
@@ -327,10 +348,6 @@ class Raw:
         if isinstance(other, str):
             return self.value == other
         return False
-
-    def __ne__(self, other):
-        """Overrides the default implementation (unnecessary in Python 3)"""
-        return not self.__eq__(other)
 
 
 class Quote:

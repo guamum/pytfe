@@ -368,3 +368,57 @@ class TestFormatTerraform(TestCase):
           version = "0.0.5"
         }""")
         self.assertEqual(module.format(), expected)
+
+
+class TestFormatTFBlock(TestCase):
+
+    def test_tfblock_passed_to_terraform(self):
+        obj = pytfe.terraform(
+            pytfe.TFBlock("""
+            required_providers {
+              github     = "~> 2.9.0"
+              helm       = "~> 1.2.4"
+              kubernetes = "~> 1.11.0"
+              local      = "~> 1.4.0"
+              tls        = "~> 3.1.0"
+            }"""),
+            required_version='">= 0.13"'
+        )
+        expected = pytfe.TFBlock("""
+        terraform {
+          required_providers {
+            github     = "~> 2.9.0"
+            helm       = "~> 1.2.4"
+            kubernetes = "~> 1.11.0"
+            local      = "~> 1.4.0"
+            tls        = "~> 3.1.0"
+          }
+          required_version = ">= 0.13"
+        }""")
+        self.assertEqual(obj.format(), expected)
+
+    def test_tfblock_passed_to_item(self):
+        obj = pytfe.Item(
+            "terraform",
+            pytfe.TFBlock("""
+            required_version = ">= 0.13"
+            required_providers {
+              github     = "~> 2.9.0"
+              helm       = "~> 1.2.4"
+              kubernetes = "~> 1.11.0"
+              local      = "~> 1.4.0"
+              tls        = "~> 3.1.0"
+            }"""),
+        )
+        expected = pytfe.TFBlock("""
+        terraform {
+          required_version = ">= 0.13"
+          required_providers {
+            github     = "~> 2.9.0"
+            helm       = "~> 1.2.4"
+            kubernetes = "~> 1.11.0"
+            local      = "~> 1.4.0"
+            tls        = "~> 3.1.0"
+          }
+        }""")
+        self.assertEqual(obj.format(), expected)
