@@ -43,55 +43,6 @@ class Attribute(str):
         return Attribute(f'{self}.{name}')
 
 
-class Block(dict):
-    """ A `Block` is a dictionary-like container for other content. """
-
-    # def __init__(self, **kwargs):
-    #     # Convert variables into references instead of adding the actual dict.
-    #     for k, v in kwargs.items():
-    #         if isinstance(v, Variable):
-    #             kwargs[k] = str(v)
-
-    #     super().__init__(**kwargs)
-
-    def __getattr__(self, attr):
-        """Special handling for accessing attributes,
-        If ``Block.attr`` does not exist, try to return Block[attr]. If that
-        does not exists either, return `attr` as a string, prefixed
-        by the name (and type) of the Block that is referenced.
-        This is for example necessary for referencing an attribute of a
-        Terraform resource which only becomes available after the resource
-        has been created.
-        Example:
-           instance = terrascript.resources.aws_instance("server", ...)
-           output = terrascript.Output("instance_ip_addr",
-                                       value=instance.private_ip)
-                                                    ^^^^^^^^^^
-        Where ``instance.private_ip`` does not (yet) exist.
-        """
-        # Try to return the entry in the dictionary. Otherwise return a string
-        # which must be formatted differently depending on what is referenced.
-
-        if attr in self:
-            return self[attr]
-        elif attr.startswith("__"):
-            raise AttributeError
-        else:
-            if isinstance(self, Resource):
-                return Attribute(f"{self.__class__.__name__}.{self._name}.{attr}")
-            if isinstance(self, Module):
-                return Attribute(f"module.{self._name}.{attr}")
-            if isinstance(self, Variable):
-                return Attribute(f"var.{self._name}.{attr}")
-            elif isinstance(self, Locals):
-                return Attribute(f"local.{attr}")
-            elif isinstance(self, Data):
-                # data.google_compute_image.NAME.ATTR
-                return Attribute(f"data.{self.__class__.__name__}.{self._name}.{attr}")
-            else:
-                raise AttributeError(attr)
-
-
 def format_function(value):
     lines = []
     lines.append(value.args[0])
@@ -181,7 +132,7 @@ class Item:
         self.type = item_type
         self.args = tuple(arg for arg in args if not isinstance(arg, (Item, TFBlock)))
         self.all_args = tuple(arg for arg in args)
-        self.kwds = Block(**kwds)
+        self.kwds = dict(**kwds)
         self.items = tuple(item for item in args if isinstance(item, (Item, TFBlock)))
 
     def format(self) -> str:
@@ -375,7 +326,7 @@ class Plan:
 
     def __init__(self):
         # self.items = []
-        self.kwds = Block()
+        self.kwds = dict()
 
     @property
     def modules(self):
@@ -393,7 +344,7 @@ class Plan:
             if not item.args:
                 self.kwds[item.type] = []
             else:
-                self.kwds[item.type] = Block()
+                self.kwds[item.type] = dict()
 
         if item.args:
             self.kwds[item.type][item.args[0]] = item
@@ -466,11 +417,6 @@ class Plan:
                         self.kwds[k] = plan.kwds[k]
             return
         raise Exception(f'{plan} must be a Plan instance.')
-
-    # def __getattr__(self, name):
-    #     list_obj = self.kwds.get(name, Block())
-    #     return list_obj
-    #     return Attribute(f'{self}.{name}')
 
 
 def clear_dir(odir: str):
@@ -642,11 +588,12 @@ connection = Connection
 module = Module
 data = Data
 plan = Plan
-
+block = Item
 
 __all__ = [
     "Plan",
     "plan",
+    'block',
     "TFBlock",
     "backend",
     "connection",

@@ -1,12 +1,12 @@
 import textwrap
 import pytfe
 
-from pytfe.app import Item
+from pytfe import block
 from pytfe import Plan
 
 
 def test_item():
-    item = Item("provider")
+    item = block("provider")
     assert item.type == "provider"
     assert item.args == ()
     assert item.kwds == {}
@@ -15,14 +15,14 @@ def test_item():
     provider {
     }""")
 
-    item = Item("provider", "docker")
+    item = block("provider", "docker")
     assert item.type == "provider"
     assert item.args == ("docker",)
     assert item.kwds == {}
     assert item.items == ()
     assert item.format() == 'provider "docker" {\n}'
 
-    item = Item("provider", "docker", host='"unix:///var/run/docker.sock"')
+    item = block("provider", "docker", host='"unix:///var/run/docker.sock"')
     assert item.type == "provider"
     assert item.args == ("docker",)
     assert item.kwds == {"host": '"unix:///var/run/docker.sock"'}
@@ -32,13 +32,13 @@ def test_item():
       host = "unix:///var/run/docker.sock"
     }""")
 
-    backend_item = Item(
+    backend_item = block(
         "backend", "consul",
         address='"demo.consul.io"',
         scheme='"https"',
         path='"example_app/terraform_state"'
     )
-    item = Item(
+    item = block(
         "terraform",
         backend_item,
         required_version='">= 0.13"',
@@ -65,10 +65,10 @@ def test_plan():
     assert plan.format() == ""
 
     plan = Plan()
-    provider = Item("provider", "docker", host='"unix:///var/run/docker.sock"')
-    resource = Item("resource", "docker_container", "foo",
-                    image='"redis:latest"', name='"foo"')
-    module = Item("module", "module_a", source='"./module_a"')
+    provider = block("provider", "docker", host='"unix:///var/run/docker.sock"')
+    resource = block("resource", "docker_container", "foo",
+                     image='"redis:latest"', name='"foo"')
+    module = block("module", "module_a", source='"./module_a"')
 
     plan += provider
     assert plan.items == [provider]
