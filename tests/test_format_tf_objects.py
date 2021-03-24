@@ -83,6 +83,31 @@ class TestFormatResource(TestCase):
         }""")
         self.assertEqual(function.format(), expected)
 
+    def test_reference_to_resource(self):
+        plan = pytfe.Plan()
+        docker_container = plan.add(pytfe.resource.docker_container(
+            "redis", image=Quote('redis'), name=Quote('foo')
+        ))
+        plan += pytfe.output.docker_output(
+            value=docker_container,
+            value_exist_attr=docker_container.image,
+            value_not_exist_attr=docker_container.not_exist_attr
+        )
+
+        expected = pytfe.TFBlock("""
+        resource "docker_container" "redis" {
+          image = "redis"
+          name = "foo"
+        }
+
+        output "docker_output" {
+          value = docker_container.redis
+          value_exist_attr = "redis"
+          value_not_exist_attr = docker_container.redis.not_exist_attr
+        }""")
+
+        self.assertEqual(plan.format_full(), expected)
+
 
 class TestFunctionGenerator(TestCase):
 

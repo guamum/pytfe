@@ -79,12 +79,12 @@ def format_any_obj(key: str, value: object, indent: int = 0):
         temp_value = value.format()
     elif isinstance(value, Variable):
         var_path = '.'.join(value.args)
-        print(var_path)
         temp_value = f'var.{var_path}'
     # elif isinstance(value, Data):
     #     temp_value = f'var.{value.args[0]}'
-    elif isinstance(value, Item):
-        temp_value = value.format()
+    elif isinstance(value, Resource):
+        _path = '.'.join(value.args)
+        temp_value = f'{_path}'
     elif isinstance(value, dict):
         temp_value = format_dict(value, indent=indent)
     elif isinstance(value, list):
@@ -171,8 +171,8 @@ class Item:
             raise AttributeError
         else:
             if isinstance(self, Resource):
-                resource_name = self.args[0]
-                return Attribute(f"{resource_name}.{attr}")
+                _path = '.'.join(self.args)
+                return Attribute(f"{_path}.{attr}")
             if isinstance(self, Module):
                 return Attribute(f"module.{attr}")
             if isinstance(self, Variable):
