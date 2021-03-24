@@ -271,11 +271,15 @@ class Terraform(BaseItem):
 class TFBlock:
     """docstring for TFBlock"""
 
-    def __init__(self, value: str=''):
+    def __init__(self, value: str='', **kwargs):
         self.value = value
+        self.kwargs = kwargs
 
     def format(self):
         formatted = textwrap.dedent(self.value)
+        for k, v in self.kwargs.items():
+            replace = '{' + k + '}'
+            formatted = formatted.replace(replace, v)
         if self.value.startswith('\n'):
             formatted = formatted.replace('\n', '', 1)
         return formatted
