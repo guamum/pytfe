@@ -85,6 +85,9 @@ def format_any_obj(key: str, value: object, indent: int = 0):
     elif isinstance(value, Resource):
         _path = '.'.join(value.args)
         temp_value = f'{_path}'
+    elif isinstance(value, Locals):
+        _path = '.'.join(value.args)
+        temp_value = f'local.{_path}'
     elif isinstance(value, dict):
         temp_value = format_dict(value, indent=indent)
     elif isinstance(value, list):
@@ -124,6 +127,24 @@ def format_list(lst: list, indent: int = 0) -> str:
     lines.append(',\n'.join(inside_lines))
     lines.append("]")
     return textwrap.indent("\n".join(lines), '')
+
+
+def evaluate_attribute(cls, attr):
+    if isinstance(cls, Resource):
+        _path = '.'.join(cls.args)
+        return Attribute(f"{_path}.{attr}")
+    if isinstance(cls, Module):
+        return Attribute(f"module.{attr}")
+    if isinstance(cls, Variable):
+        return Attribute(f"var.{cls.args[0]}")
+    elif isinstance(cls, Locals):
+        return Attribute(f"local.{attr}")
+    elif isinstance(cls, Data):
+        # data.google_compute_image.NAME.ATTR]
+        data_path = ".".join(cls.args)
+        return Attribute(f"data.{data_path}.{attr}")
+    else:
+        raise AttributeError(attr)
 
 
 class Item:
@@ -170,21 +191,7 @@ class Item:
         elif attr.startswith("__"):
             raise AttributeError
         else:
-            if isinstance(self, Resource):
-                _path = '.'.join(self.args)
-                return Attribute(f"{_path}.{attr}")
-            if isinstance(self, Module):
-                return Attribute(f"module.{attr}")
-            if isinstance(self, Variable):
-                return Attribute(f"var.{self.args[0]}")
-            elif isinstance(self, Locals):
-                return Attribute(f"local.{attr}")
-            elif isinstance(self, Data):
-                # data.google_compute_image.NAME.ATTR]
-                data_path = ".".join(self.args)
-                return Attribute(f"data.{data_path}.{attr}")
-            else:
-                raise AttributeError(attr)
+            return evaluate_attribute(self, attr)
 
     def __str__(self):
         class_name = self.__class__.__name__
@@ -390,6 +397,7 @@ class Plan:
         content = []
         content.append(self.format_by_item_type(items, 'terraform'))
         content.append(self.format_by_item_type(items, 'provider'))
+        content.append(self.format_by_item_type(items, 'locals'))
         content.append(self.format_by_item_type(items, 'resource'))
         content.append(self.format_by_item_type(items, 'module'))
         return '\n\n'.join(x for x in content if x)

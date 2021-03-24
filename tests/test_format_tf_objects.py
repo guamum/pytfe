@@ -19,15 +19,15 @@ class TestFormatLocals(TestCase):
         self.assertEqual(local.format(), expected)
 
     def test_format_locals_with_map(self):
-
-        local = pytfe.locals(local_map={'hello': Quote('world')})
+        plan = pytfe.plan()
+        plan += pytfe.locals(local_map={'hello': Quote('world')})
         expected = pytfe.TFBlock("""
         locals {
           local_map = {
             hello = "world"
           }
         }""")
-        self.assertEqual(local.format(), expected)
+        self.assertEqual(plan.format(), expected)
 
     def test_format_locals_with_list(self):
 
@@ -40,6 +40,32 @@ class TestFormatLocals(TestCase):
           ]
         }""")
         self.assertEqual(local.format(), expected)
+
+    def test_refernce_to_local_resorce(self):
+        plan = pytfe.plan()
+        local = plan.add(pytfe.locals(local_map={'hello': Quote('world')}))
+
+        plan += pytfe.output.local_output(
+            value_level_1=local.local_map,
+            value_level_2=local.local_map['hello'],
+            value_not_exist_attr=local.not_exist_attr
+        )
+        expected = pytfe.TFBlock("""
+        locals {
+          local_map = {
+            hello = "world"
+          }
+        }
+
+        output "local_output" {
+          value_level_1 = {
+            hello = "world"
+          }
+          value_level_2 = "world"
+          value_not_exist_attr = local.not_exist_attr
+        }""")
+
+        self.assertEqual(plan.format_full(), expected)
 
 
 class TestFormatFunction(TestCase):
