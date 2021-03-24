@@ -279,7 +279,8 @@ class TFBlock:
         formatted = textwrap.dedent(self.value)
         for k, v in self.kwargs.items():
             replace = '{' + k + '}'
-            formatted = formatted.replace(replace, v)
+            formatted_value = format_any_obj('', v)
+            formatted = formatted.replace(replace, formatted_value)
         if self.value.startswith('\n'):
             formatted = formatted.replace('\n', '', 1)
         return formatted

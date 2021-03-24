@@ -83,27 +83,30 @@ class TestFormatResource(TestCase):
         }""")
         self.assertEqual(function.format(), expected)
 
-    def test_reference_to_resource(self):
+    def test_reference_to_local_file_resource(self):
         plan = pytfe.Plan()
-        docker_container = plan.add(pytfe.resource.docker_container(
-            "redis", image=Quote('redis'), name=Quote('foo')
+        local_file = plan.add(pytfe.resource.local_file(
+            "my_local_file",
+            filename='"${path.module}/primary-k8s-config.yaml.secret"',
+            content='"Hello World"',
         ))
-        plan += pytfe.output.docker_output(
-            value=docker_container,
-            value_exist_attr=docker_container.image,
-            value_not_exist_attr=docker_container.not_exist_attr
+
+        plan += pytfe.output.localfile_output(
+            value=local_file,
+            value_exist_attr=local_file.filename,
+            value_not_exist_attr=local_file.not_exist_attr
         )
 
         expected = pytfe.TFBlock("""
-        resource "docker_container" "redis" {
-          image = "redis"
-          name = "foo"
+        resource "local_file" "my_local_file" {
+          filename = "${path.module}/primary-k8s-config.yaml.secret"
+          content = "Hello World"
         }
 
-        output "docker_output" {
-          value = docker_container.redis
-          value_exist_attr = "redis"
-          value_not_exist_attr = docker_container.redis.not_exist_attr
+        output "localfile_output" {
+          value = local_file.my_local_file
+          value_exist_attr = "${path.module}/primary-k8s-config.yaml.secret"
+          value_not_exist_attr = local_file.my_local_file.not_exist_attr
         }""")
 
         self.assertEqual(plan.format_full(), expected)
