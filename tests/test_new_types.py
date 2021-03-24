@@ -1,9 +1,8 @@
 import textwrap
 import pytfe
 
-from pytfe import Item
+from pytfe.app import Item
 from pytfe import Plan
-from pytfe import Quote
 
 
 def test_item():

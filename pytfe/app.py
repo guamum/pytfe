@@ -1,5 +1,6 @@
 import argparse
 import importlib
+import inspect
 import logging
 import os
 import subprocess
@@ -242,7 +243,17 @@ class Item:
         return str(self)
 
 
-class BaseItem(Item):
+class MetaClassTF(type):
+    """docstring for MetaClassTF"""
+
+    def __getattr__(cls, attr):
+        # Handle class methods
+        def wrap(*args, **kwargs):
+            return cls(attr, *args, **kwargs)
+        return wrap
+
+
+class BaseItem(Item, metaclass=MetaClassTF):
 
     def __init__(self, *args, **kwds):
         super().__init__(self.type, *args, **kwds)
@@ -328,14 +339,6 @@ class TFBlock:
         if isinstance(other, str):
             return str(self) == other
         return False
-
-
-class FunctionGenerator:
-
-    def __getattr__(self, name):
-        def func(*args, **kwargs):
-            return Function(name, *args, **kwargs)
-        return func
 
 
 class Raw:
@@ -633,10 +636,32 @@ terraform = Terraform
 backend = Backend
 output = Output
 provider = Provider
+locals = Locals
 resource = Resource
+connection = Connection
+module = Module
 data = Data
-functions = FunctionGenerator()
-f = functions
+plan = Plan
+
+
+__all__ = [
+    "Plan",
+    "plan",
+    "TFBlock",
+    "backend",
+    "connection",
+    "data",
+    "function",
+    "locals",
+    "module",
+    "output",
+    "provider",
+    "provisioner",
+    "resource",
+    "terraform",
+    "variable",
+    "Quote"
+]
 
 if __name__ == "__main__":
     main()

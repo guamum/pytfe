@@ -2,8 +2,8 @@ import pytfe
 import textwrap
 
 
-from pytfe import Raw
 from pytfe import Quote
+from pytfe.app import Raw
 from unittest import TestCase
 
 
@@ -11,7 +11,7 @@ class TestFormatLocals(TestCase):
 
     def test_format_locals(self):
 
-        local = pytfe.Locals(service_name=Quote('forum'))
+        local = pytfe.locals(service_name=Quote('forum'))
         expected = pytfe.TFBlock("""
         locals {
           service_name = "forum"
@@ -20,7 +20,7 @@ class TestFormatLocals(TestCase):
 
     def test_format_locals_with_map(self):
 
-        local = pytfe.Locals(local_map={'hello': Quote('world')})
+        local = pytfe.locals(local_map={'hello': Quote('world')})
         expected = pytfe.TFBlock("""
         locals {
           local_map = {
@@ -31,7 +31,7 @@ class TestFormatLocals(TestCase):
 
     def test_format_locals_with_list(self):
 
-        local = pytfe.Locals(local_list=[Quote('string'), '"string2"'])
+        local = pytfe.locals(local_list=[Quote('string'), '"string2"'])
         expected = pytfe.TFBlock("""
         locals {
           local_list = [
@@ -45,20 +45,36 @@ class TestFormatLocals(TestCase):
 class TestFormatFunction(TestCase):
 
     def test_simple_function(self):
-        function = pytfe.Function(
+        function = pytfe.function(
             'concat', "aws_instance.blue.*.id", "aws_instance.green.*.id"
         )
+        dot_syntax = pytfe.function.concat(
+            "aws_instance.blue.*.id", "aws_instance.green.*.id"
+        )
+
         expected = pytfe.TFBlock(
             """concat(aws_instance.blue.*.id, aws_instance.green.*.id)"""
         )
         self.assertEqual(function.format(), expected)
+        self.assertEqual(dot_syntax.format(), expected)
 
 
 class TestFormatResource(TestCase):
 
     def test_simple_resource(self):
-        function = pytfe.Resource(
+        function = pytfe.resource(
             'docker_container', "redis", image=Quote('redis'), name=Quote('foo')
+        )
+        expected = pytfe.TFBlock("""
+        resource "docker_container" "redis" {
+          image = "redis"
+          name = "foo"
+        }""")
+        self.assertEqual(function.format(), expected)
+
+    def test_simple_resource_new_syntax(self):
+        function = pytfe.resource.docker_container(
+            "redis", image=Quote('redis'), name=Quote('foo')
         )
         expected = pytfe.TFBlock("""
         resource "docker_container" "redis" {
@@ -71,13 +87,13 @@ class TestFormatResource(TestCase):
 class TestFunctionGenerator(TestCase):
 
     def test_simple(self):
-        func = pytfe.f.list()
+        func = pytfe.function.list()
 
         expected = textwrap.dedent("""list()""")
         self.assertEqual(func.format(), expected)
 
     def test_simple_two_nested_function(self):
-        func = pytfe.f.list(pytfe.f.object(hello='"world"'))
+        func = pytfe.function.list(pytfe.function.object(hello='"world"'))
 
         expected = pytfe.TFBlock("""
         list(object({
@@ -89,7 +105,7 @@ class TestFunctionGenerator(TestCase):
 class TestFormatVariable(TestCase):
 
     def test_simple_resource(self):
-        variable = pytfe.Variable(
+        variable = pytfe.variable(
             'redis_image', type=Quote("string"), default=Quote('v1.2')
         )
         expected = pytfe.TFBlock("""
@@ -146,7 +162,7 @@ class TestFormatVariable(TestCase):
         """
         variable = pytfe.variable(
             'docker_ports',
-            type=pytfe.f.list(pytfe.f.object(
+            type=pytfe.function.list(pytfe.function.object(
                 internal='number',
                 external='number',
                 protocol='string'
@@ -279,7 +295,7 @@ class TestFormatVariable(TestCase):
 class TestFormatProvider(TestCase):
 
     def test_simple(self):
-        function = pytfe.Provider(
+        function = pytfe.provider(
             'kubernetes', load_config_file=True
         )
         expected = pytfe.TFBlock("""
@@ -292,7 +308,7 @@ class TestFormatProvider(TestCase):
 class TestFormatOutput(TestCase):
 
     def test_simple(self):
-        obj = pytfe.Output(
+        obj = pytfe.output(
             'my_output', value=True, description='"My output value"'
         )
         expected = pytfe.TFBlock("""
@@ -306,7 +322,7 @@ class TestFormatOutput(TestCase):
 class TestFormatProvisioner(TestCase):
 
     def test_simple(self):
-        obj = pytfe.Provisioner(
+        obj = pytfe.provisioner(
             'local-exec',
             command=Quote("echo The server's IP address is ${self.private_ip}"),
             on_failure="continue"
@@ -319,11 +335,11 @@ class TestFormatProvisioner(TestCase):
         self.assertEqual(obj.format(), expected)
 
     def test_provisioner_with_connection(self):
-        obj = pytfe.Provisioner(
+        obj = pytfe.provisioner(
             'local-exec',
             command=Quote("echo The server's IP address is ${self.private_ip}"),
             on_failure=Raw("continue"),
-            connection=pytfe.Connection(
+            connection=pytfe.connection(
                 type=Quote("winrm"),
                 user=Quote("Administrator"),
             )
@@ -346,7 +362,7 @@ class TestFormatProvisioner(TestCase):
             'file',
             source=Quote("conf/myapp.conf"),
             destination=Quote("/etc/myapp.conf"),
-            connection=pytfe.Connection(
+            connection=pytfe.connection(
                 type=Quote("ssh"),
                 user=Quote("root"),
                 password=variable.user_name,
@@ -376,7 +392,7 @@ class TestFormatProvisioner(TestCase):
 class TestFormatConnection(TestCase):
 
     def test_simple(self):
-        obj = pytfe.Connection(
+        obj = pytfe.connection(
             type=Quote("winrm"),
             user=Quote("Administrator"),
         )
@@ -391,8 +407,7 @@ class TestFormatConnection(TestCase):
 class TestFormatModule(TestCase):
 
     def test_simple(self):
-        module = pytfe.Module(
-            'consul',
+        module = pytfe.module.consul(
             source=Quote("hashicorp/consul/aws"),
             version=Quote("0.0.5"),
             servers=3
@@ -509,8 +524,7 @@ class TestFormatTFBlock(TestCase):
         self.assertEqual(obj.format(), expected)
 
     def test_tfblock_passed_to_item(self):
-        obj = pytfe.Item(
-            "terraform",
+        obj = pytfe.terraform(
             pytfe.TFBlock("""
             required_version = ">= 0.13"
             required_providers {
