@@ -352,7 +352,8 @@ class Plan:
                 self.kwds[item.type] = dict()
 
         if item.args:
-            self.kwds[item.type][item.args[0]] = item
+            args_path = '.'.join(item.args)
+            self.kwds[item.type][args_path] = item
         else:
             self.kwds[item.type].append(item)
         return self

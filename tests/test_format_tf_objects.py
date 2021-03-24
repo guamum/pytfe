@@ -87,7 +87,7 @@ class TestFormatResource(TestCase):
         plan = pytfe.Plan()
         local_file = plan.add(pytfe.resource.local_file(
             "my_local_file",
-            filename='"${path.module}/primary-k8s-config.yaml.secret"',
+            filename='"${path.module}/kubeconfig.yaml"',
             content='"Hello World"',
         ))
 
@@ -99,14 +99,39 @@ class TestFormatResource(TestCase):
 
         expected = pytfe.TFBlock("""
         resource "local_file" "my_local_file" {
-          filename = "${path.module}/primary-k8s-config.yaml.secret"
+          filename = "${path.module}/kubeconfig.yaml"
           content = "Hello World"
         }
 
         output "localfile_output" {
           value = local_file.my_local_file
-          value_exist_attr = "${path.module}/primary-k8s-config.yaml.secret"
+          value_exist_attr = "${path.module}/kubeconfig.yaml"
           value_not_exist_attr = local_file.my_local_file.not_exist_attr
+        }""")
+
+        self.assertEqual(plan.format_full(), expected)
+
+    def test_reference_to_local_file_resource(self):
+        plan = pytfe.Plan()
+        plan.add(pytfe.resource.local_file(
+            "my_local_file",
+            filename='"${path.module}/kubeconfig.yaml"',
+            content='"Hello World"',
+        ))
+        plan.add(pytfe.resource.local_file(
+            "my_local_file_v2",
+            filename='"${path.module}/kubeconfig.yaml"',
+            content='"Hello World v2"',
+        ))
+        expected = pytfe.TFBlock("""
+        resource "local_file" "my_local_file" {
+          filename = "${path.module}/kubeconfig.yaml"
+          content = "Hello World"
+        }
+
+        resource "local_file" "my_local_file_v2" {
+          filename = "${path.module}/kubeconfig.yaml"
+          content = "Hello World v2"
         }""")
 
         self.assertEqual(plan.format_full(), expected)
@@ -474,7 +499,7 @@ class TestFormatData(TestCase):
         plan.add(pytfe.resource(
             "local_file", "kubeconfig_primary",
             content=data.kube_config,
-            filename='"${path.module}/primary-k8s-config.yaml"',
+            filename='"${path.module}/kubeconfig.yaml"',
             sensitive_content=True
         ))
 
@@ -485,7 +510,7 @@ class TestFormatData(TestCase):
 
         resource "local_file" "kubeconfig_primary" {
           content = data.digitalocean_kubernetes_cluster.example.kube_config
-          filename = "${path.module}/primary-k8s-config.yaml"
+          filename = "${path.module}/kubeconfig.yaml"
           sensitive_content = true
         }""")
 
