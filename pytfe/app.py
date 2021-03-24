@@ -137,8 +137,8 @@ def evaluate_attribute(cls, attr):
         return Attribute(f"module.{attr}")
     if isinstance(cls, Variable):
         return Attribute(f"var.{cls.args[0]}")
-    elif isinstance(cls, Locals):
-        return Attribute(f"local.{attr}")
+    # elif isinstance(cls, Locals):
+    #     return Attribute(f"local.{attr}")
     elif isinstance(cls, Data):
         # data.google_compute_image.NAME.ATTR]
         data_path = ".".join(cls.args)
@@ -234,6 +234,9 @@ class Output(BaseItem):
 
 class Locals(BaseItem):
     type = 'locals'
+
+    def __getattr__(self, attr):
+        return Attribute(f"local.{attr}")
 
 
 class Module(BaseItem):

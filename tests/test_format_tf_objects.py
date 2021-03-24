@@ -44,10 +44,9 @@ class TestFormatLocals(TestCase):
     def test_refernce_to_local_resorce(self):
         plan = pytfe.plan()
         local = plan.add(pytfe.locals(local_map={'hello': Quote('world')}))
-
         plan += pytfe.output.local_output(
             value_level_1=local.local_map,
-            value_level_2=local.local_map['hello'],
+            value_level_2=local.local_map.hello,
             value_not_exist_attr=local.not_exist_attr
         )
         expected = pytfe.TFBlock("""
@@ -58,10 +57,8 @@ class TestFormatLocals(TestCase):
         }
 
         output "local_output" {
-          value_level_1 = {
-            hello = "world"
-          }
-          value_level_2 = "world"
+          value_level_1 = local.local_map
+          value_level_2 = local.local_map.hello
           value_not_exist_attr = local.not_exist_attr
         }""")
 
