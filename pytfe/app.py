@@ -374,7 +374,7 @@ class Plan:
         return _items
 
     # fmt: off
-    def format(self):
+    def format_old(self):
         ignore_types = ("variable", "output", "data")
         return "\n\n".join(
             map(
@@ -383,12 +383,21 @@ class Plan:
             )
         ).strip("\n")
 
+    def format(self):
+        items = self.items
+        content = []
+        content.append(self.format_by_item_type(items, 'terraform'))
+        content.append(self.format_by_item_type(items, 'provider'))
+        content.append(self.format_by_item_type(items, 'resource'))
+        content.append(self.format_by_item_type(items, 'module'))
+        return '\n\n'.join(x for x in content if x)
+
     def format_full(self):
         return "\n\n".join(
             map(lambda item: item.format(), self.items)
         ).strip("\n")
 
-    def format_by_item_type(self, *args):
+    def format_by_item_type(self, items, *args):
         return "\n\n".join(
             map(
                 lambda item: item.format(),
@@ -396,13 +405,13 @@ class Plan:
         ).strip("\n")
 
     def format_datas(self):
-        return self.format_by_item_type('data')
+        return self.format_by_item_type(self.items, 'data')
 
     def format_vars(self):
-        return self.format_by_item_type('variable')
+        return self.format_by_item_type(self.items, 'variable')
 
     def format_outs(self):
-        return self.format_by_item_type('output')
+        return self.format_by_item_type(self.items, 'output')
     # fmt: on
 
     def update(self, plan):
