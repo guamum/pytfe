@@ -542,6 +542,10 @@ class TestFormatData(TestCase):
         }""")
         self.assertEqual(plan.format_datas(), expected_data)
 
+        self.assertIsInstance(data, pytfe.data)
+        self.assertEqual(str(data), 'data.digitalocean_kubernetes_cluster.example')
+        self.assertEqual(repr(data), 'data.digitalocean_kubernetes_cluster.example')
+
 
 class TestFormatTerraform(TestCase):
 

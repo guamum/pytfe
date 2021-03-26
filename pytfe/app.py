@@ -80,8 +80,6 @@ def format_any_obj(key: str, value: object, indent: int = 0):
     elif isinstance(value, Variable):
         var_path = '.'.join(value.args)
         temp_value = f'var.{var_path}'
-    # elif isinstance(value, Data):
-    #     temp_value = f'var.{value.args[0]}'
     elif isinstance(value, Resource):
         _path = '.'.join(value.args)
         temp_value = f'{_path}'
@@ -197,11 +195,10 @@ class Item:
             return evaluate_attribute(self, attr)
 
     def __str__(self):
-        class_name = self.__class__.__name__
-        return Attribute('{0}.{1}'.format(class_name, class_name))
+        return Attribute(repr(self))
 
     def __repr__(self):
-        return str(self)
+        return Attribute(format_any_obj('', self))
 
 
 class MetaClassTF(type):
