@@ -511,7 +511,7 @@ class TestFormatData(TestCase):
         }""")
         self.assertEqual(data.format(), expected)
 
-    def test_reference_data_in_a_resouce(self):
+    def test_reference_data_in_a_local(self):
         plan = pytfe.Plan()
         data = plan.add(pytfe.data(
             'digitalocean_kubernetes_cluster',
@@ -519,11 +519,9 @@ class TestFormatData(TestCase):
             name="prod-cluster-01"
         ))
 
-        plan.add(pytfe.resource(
-            "local_file", "kubeconfig_primary",
-            content=data.kube_config,
-            filename='"${path.module}/kubeconfig.yaml"',
-            sensitive_content=True
+        plan.add(pytfe.locals(
+            value=data,
+            value_level_1=data.extra_vars,
         ))
 
         expected = pytfe.TFBlock("""
@@ -531,10 +529,9 @@ class TestFormatData(TestCase):
           name = prod-cluster-01
         }
 
-        resource "local_file" "kubeconfig_primary" {
-          content = data.digitalocean_kubernetes_cluster.example.kube_config
-          filename = "${path.module}/kubeconfig.yaml"
-          sensitive_content = true
+        locals {
+          value = data.digitalocean_kubernetes_cluster.example
+          value_level_1 = data.digitalocean_kubernetes_cluster.example.extra_vars
         }""")
 
         self.assertEqual(plan.format_full(), expected)

@@ -88,6 +88,9 @@ def format_any_obj(key: str, value: object, indent: int = 0):
     elif isinstance(value, Locals):
         _path = '.'.join(value.args)
         temp_value = f'local.{_path}'
+    elif isinstance(value, Data):
+        _path = '.'.join(value.args)
+        temp_value = f'data.{_path}'
     elif isinstance(value, dict):
         temp_value = format_dict(value, indent=indent)
     elif isinstance(value, list):
