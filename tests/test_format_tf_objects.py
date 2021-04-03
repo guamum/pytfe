@@ -682,6 +682,33 @@ class TestFormatPlan(TestCase):
         }""")
         self.assertEqual(plan1.format_vars(), expected)
 
+    def test_refence_objects_in_plan(self):
+        plan = pytfe.Plan()
+        plan += pytfe.variable('cluster_name', type='"string"', default='""')
+
+        plan += pytfe.data.digitalocean_kubernetes_cluster(
+            'example',
+            name=plan.var.cluster_name
+        )
+        plan += pytfe.locals(
+            cluster_name=plan.data.digitalocean_kubernetes_cluster.example.name
+        )
+        expected = pytfe.TFBlock("""
+        variable "cluster_name" {
+          type = "string"
+          default = ""
+        }
+
+        data "digitalocean_kubernetes_cluster" "example" {
+          name = var.cluster_name
+        }
+
+        locals {
+          cluster_name = data.digitalocean_kubernetes_cluster.example.name
+        }""")
+
+        self.assertEqual(plan.format_full(), expected)
+
 
 class TestFormatTFVars(TestCase):
 

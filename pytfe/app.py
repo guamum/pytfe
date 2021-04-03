@@ -466,6 +466,9 @@ class Plan:
             return
         raise Exception(f'{plan} must be a Plan instance.')
 
+    def __getattr__(self, attr):
+        return Attribute(f"{attr}")
+
 
 def clear_dir(odir: str):
     ans = input(
