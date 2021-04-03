@@ -124,7 +124,7 @@ def format_list(lst: list, indent: int = 0) -> str:
     inside_lines = []
     for item in lst:
         item = format_any_obj('', item, indent=indent)
-        inside_lines.append(textwrap.indent(f"{item}", IDENTATION))
+        inside_lines.append(textwrap.indent(f'{item}', IDENTATION))
     lines.append(',\n'.join(inside_lines))
     lines.append("]")
     return textwrap.indent("\n".join(lines), '')
@@ -276,6 +276,12 @@ class Data(BaseItem):
 
 class Terraform(BaseItem):
     type = 'terraform'
+
+
+class TFVar(Item, metaclass=MetaClassTF):
+
+    def __init__(self, *args, **kwds):
+        super().__init__(args[0], *args[1:], **kwds)
 
 
 class TFBlock:
@@ -615,6 +621,7 @@ module = Module
 data = Data
 plan = Plan
 block = Item
+tfvar = TFVar
 
 __all__ = [
     "Plan",
@@ -633,7 +640,8 @@ __all__ = [
     "resource",
     "terraform",
     "variable",
-    "Quote"
+    "Quote",
+    "tfvar",
 ]
 
 if __name__ == "__main__":

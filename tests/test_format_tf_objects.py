@@ -681,3 +681,20 @@ class TestFormatPlan(TestCase):
           default = ""
         }""")
         self.assertEqual(plan1.format_vars(), expected)
+
+
+class TestFormatTFVars(TestCase):
+
+    def test_format_simple_ftvars(self):
+        tfvar = pytfe.tfvar(
+            "vars",
+            k8s_primary='"k8s-staging"',
+            do_region='"nyc3"',
+        )
+
+        expected = pytfe.TFBlock("""
+        vars {
+          k8s_primary = "k8s-staging"
+          do_region = "nyc3"
+        }""")
+        self.assertEqual(tfvar.format(), expected)
