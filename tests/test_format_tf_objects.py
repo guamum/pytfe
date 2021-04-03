@@ -685,6 +685,27 @@ class TestFormatPlan(TestCase):
 
 class TestFormatTFVars(TestCase):
 
+    def test_format_simple_empthy_tfvar(self):
+
+        # TODO: assert expecific exception
+        with self.assertRaises(Exception):
+            pytfe.tfvar(
+                "empty_tfvar"
+            )
+
+    def test_format_simple_empthy_list(self):
+        tfvar = pytfe.tfvar(
+            "var_list",
+            []
+        )
+
+        expected = pytfe.TFBlock("""
+        var_list = [
+
+        ]""")
+
+        self.assertEqual(tfvar.format(), expected)
+
     def test_format_simple_ftvars_dict(self):
         tfvar = pytfe.tfvar(
             "vars",
@@ -712,8 +733,6 @@ class TestFormatTFVars(TestCase):
           2,
           3
         ]""")
-        print(tfvar.format())
-        print(expected)
         self.assertEqual(tfvar.format(), expected)
 
     def test_format_add_tfvar_to_plan(self):

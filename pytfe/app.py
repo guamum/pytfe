@@ -141,7 +141,7 @@ def evaluate_attribute(cls, attr):
     # elif isinstance(cls, Locals):
     #     return Attribute(f"local.{attr}")
     elif isinstance(cls, Data):
-        # data.google_compute_image.NAME.ATTR]
+        # e.g: data.google_compute_image.NAME.ATTR
         data_path = ".".join(cls.args)
         return Attribute(f"data.{data_path}.{attr}")
     else:
@@ -281,8 +281,11 @@ class Terraform(BaseItem):
 class TFVar(Item, metaclass=MetaClassTF):
 
     def __init__(self, *args, **kwds):
-        if len(args[1:]) > 1:
+        len_args = len(args[1:])
+        if len_args > 1:
             raise Exception('Can receive only one arg value')
+        elif len_args == 0 and not kwds:
+            raise Exception('A arg value must be set')
         super().__init__(args[0], *args[1:], **kwds)
 
     def format(self):
