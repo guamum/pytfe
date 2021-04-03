@@ -685,7 +685,7 @@ class TestFormatPlan(TestCase):
 
 class TestFormatTFVars(TestCase):
 
-    def test_format_simple_ftvars(self):
+    def test_format_simple_ftvars_dict(self):
         tfvar = pytfe.tfvar(
             "vars",
             k8s_primary='"k8s-staging"',
@@ -693,8 +693,40 @@ class TestFormatTFVars(TestCase):
         )
 
         expected = pytfe.TFBlock("""
-        vars {
+        vars = {
           k8s_primary = "k8s-staging"
           do_region = "nyc3"
         }""")
+
         self.assertEqual(tfvar.format(), expected)
+
+    def test_format_simple_ftvars_list(self):
+        tfvar = pytfe.tfvar(
+            "var_list",
+            [1, 2, 3]
+        )
+
+        expected = pytfe.TFBlock("""
+        var_list = [
+          1,
+          2,
+          3
+        ]""")
+        print(tfvar.format())
+        print(expected)
+        self.assertEqual(tfvar.format(), expected)
+
+    def test_format_add_tfvar_to_plan(self):
+        plan = pytfe.Plan()
+        plan += pytfe.tfvar(
+            "vars",
+            k8s_primary='"k8s-staging"',
+            do_region='"nyc3"',
+        )
+
+        expected = pytfe.TFBlock("""
+        vars = {
+          k8s_primary = "k8s-staging"
+          do_region = "nyc3"
+        }""")
+        self.assertEqual(plan.format_full(), expected)

@@ -281,7 +281,19 @@ class Terraform(BaseItem):
 class TFVar(Item, metaclass=MetaClassTF):
 
     def __init__(self, *args, **kwds):
+        if len(args[1:]) > 1:
+            raise Exception('Can receive only one arg value')
         super().__init__(args[0], *args[1:], **kwds)
+
+    def format(self):
+        lines = []
+        if self.kwds:
+            return format_any_obj(self.type, self.kwds)
+        else:
+            lines.append(self.type + ' = ')
+            for arg in self.all_args:
+                lines.append(format_any_obj('', arg))
+            return ''.join(lines)
 
 
 class TFBlock:
